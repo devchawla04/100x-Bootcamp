@@ -1,0 +1,1 @@
+const notion_doc = "https://petal-estimate-4e9.notion.site/Class-1-HTML-CSS-2ea7dfd1073580b18cd3de83f837e082";

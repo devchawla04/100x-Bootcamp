@@ -1,0 +1,1 @@
+this is B text file which is read by JS

@@ -1,0 +1,1 @@
+const notion_doc = "https://petal-estimate-4e9.notion.site/Normal-functions-in-JS-2f17dfd107358002b41ad46b77b3fdc5";
