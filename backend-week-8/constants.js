@@ -1,0 +1,1 @@
+const notion_doc = "https://projects.100xdevs.com/tracks/http-deep-dive/HTTP-Deep-dive-1"
