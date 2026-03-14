@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>Auth Notes App</title>
+    <style>
+        :root {
+            --bg-top: #fef3c7;
+            --bg-bottom: #e0f2fe;
+            --surface: rgba(255, 252, 247, 0.88);
+            --surface-strong: #fffdf8;
+            --ink: #1e293b;
+            --muted: #64748b;
+            --primary: #0f766e;
+            --primary-dark: #115e59;
+            --primary-soft: rgba(15, 118, 110, 0.12);
+            --accent: #ea580c;
+            --accent-soft: rgba(234, 88, 12, 0.14);
+            --danger: #b91c1c;
+            --danger-soft: #fee2e2;
+            --ring: rgba(15, 118, 110, 0.24);
+            --shadow-lg: 0 28px 80px rgba(15, 23, 42, 0.14);
+            --shadow-sm: 0 12px 28px rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Manrope", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(234, 88, 12, 0.24), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.2), transparent 30%),
+                linear-gradient(145deg, var(--bg-top), var(--bg-bottom));
+            padding: 28px;
+        }
+
+        .shell {
+            width: min(1100px, 100%);
+            margin: 0 auto;
+            background: var(--surface);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            border-radius: 30px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            animation: floatIn 500ms ease-out;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+            padding: 30px;
+            border-bottom: 1px solid rgba(30, 41, 59, 0.08);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08)),
+                linear-gradient(120deg, rgba(255, 255, 255, 0.22), rgba(224, 242, 254, 0.08));
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--primary-dark);
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .title {
+            margin: 18px 0 12px;
+            font-family: "DM Serif Display", serif;
+            font-size: clamp(2.2rem, 4.8vw, 4.2rem);
+            line-height: 0.98;
+        }
+
+        .subtitle {
+            margin: 0;
+            max-width: 560px;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.65;
+        }
+
+        .hero-card {
+            align-self: end;
+            background: rgba(255, 255, 255, 0.76);
+            border: 1px solid rgba(30, 41, 59, 0.08);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .hero-card h2 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+        }
+
+        .hero-card p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .main {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 22px;
+            padding: 24px 30px 30px;
+        }
+
+        .panel {
+            background: var(--surface-strong);
+            border: 1px solid rgba(30, 41, 59, 0.08);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .auth-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 6px;
+            background: #f4f7f8;
+            border-radius: 16px;
+            margin-bottom: 18px;
+        }
+
+        .tab {
+            border: none;
+            background: transparent;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-weight: 800;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: #ffffff;
+            color: var(--ink);
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+        }
+
+        .form {
+            display: none;
+            gap: 12px;
+        }
+
+        .form.active {
+            display: grid;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid rgba(30, 41, 59, 0.14);
+            border-radius: 14px;
+            padding: 13px 14px;
+            font-size: 0.96rem;
+            font-family: inherit;
+            background: #fffdfa;
+            transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--ring);
+            transform: translateY(-1px);
+        }
+
+        .primary,
+        .secondary,
+        .danger {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+        }
+
+        .primary:hover,
+        .secondary:hover,
+        .danger:hover {
+            transform: translateY(-1px);
+        }
+
+        .primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #ffffff;
+            box-shadow: 0 14px 28px rgba(15, 118, 110, 0.22);
+        }
+
+        .secondary {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .danger {
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        .helper-text,
+        .status {
+            min-height: 22px;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .status.error {
+            color: var(--danger);
+        }
+
+        .status.success {
+            color: var(--primary-dark);
+        }
+
+        .notes-shell {
+            display: grid;
+            gap: 18px;
+        }
+
+        .notes-shell.locked {
+            opacity: 0.62;
+        }
+
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .notes-header h2 {
+            margin: 0;
+            font-size: 1.15rem;
+        }
+
+        .notes-header p {
+            margin: 6px 0 0;
+            color: var(--muted);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            padding: 10px 12px;
+            border-radius: 999px;
+            font-weight: 700;
+        }
+
+        .note-tools {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 10px;
+        }
+
+        .notes-list {
+            display: grid;
+            gap: 12px;
+            min-height: 240px;
+        }
+
+        .note-item,
+        .empty-state {
+            border-radius: 18px;
+            border: 1px solid rgba(30, 41, 59, 0.08);
+            background: linear-gradient(180deg, #ffffff, #fff7ed);
+            padding: 16px;
+        }
+
+        .note-item {
+            line-height: 1.55;
+            word-break: break-word;
+            animation: riseUp 260ms ease-out both;
+        }
+
+        .empty-state {
+            display: grid;
+            place-items: center;
+            color: var(--muted);
+            border-style: dashed;
+            text-align: center;
+            min-height: 200px;
+            background: rgba(255, 255, 255, 0.58);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(0.985);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes riseUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .hero,
+            .main {
+                grid-template-columns: 1fr;
+            }
+
+            .note-tools {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 16px;
+            }
+
+            .hero,
+            .main {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+
+            .title {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <div>
+                <span class="eyebrow">Secure Notes Flow</span>
+                <h1 class="title">Sign up, log in, then start writing.</h1>
+                <p class="subtitle">This page uses your backend signup and login endpoints first. After a successful login, the same screen unlocks the notes area and starts reading from the notes API.</p>
+            </div>
+
+            <div class="hero-card">
+                <h2>Current backend routes</h2>
+                <p><strong>POST</strong> /signup, <strong>POST</strong> /login, <strong>GET</strong> /notes, <strong>POST</strong> /notes, <strong>DELETE</strong> /notes</p>
+            </div>
+        </section>
+
+        <section class="main">
+            <aside class="panel">
+                <div class="auth-tabs">
+                    <button id="signupTab" class="tab active" type="button">Sign Up</button>
+                    <button id="loginTab" class="tab" type="button">Log In</button>
+                </div>
+
+                <form id="signupForm" class="form active">
+                    <div>
+                        <label for="signupUsername">Username</label>
+                        <input id="signupUsername" type="text" placeholder="Choose a username" maxlength="40" autocomplete="username">
+                    </div>
+                    <div>
+                        <label for="signupPassword">Password</label>
+                        <input id="signupPassword" type="password" placeholder="Create a password" maxlength="40" autocomplete="new-password">
+                    </div>
+                    <button class="primary" type="submit">Create Account</button>
+                    <div id="authStatus" class="status"></div>
+                </form>
+
+                <form id="loginForm" class="form">
+                    <div>
+                        <label for="loginUsername">Username</label>
+                        <input id="loginUsername" type="text" placeholder="Enter your username" maxlength="40" autocomplete="username">
+                    </div>
+                    <div>
+                        <label for="loginPassword">Password</label>
+                        <input id="loginPassword" type="password" placeholder="Enter your password" maxlength="40" autocomplete="current-password">
+                    </div>
+                    <button class="primary" type="submit">Log In</button>
+                    <div id="loginStatus" class="status"></div>
+                </form>
+            </aside>
+
+            <section class="panel notes-shell locked" id="notesShell">
+                <div class="notes-header">
+                    <div>
+                        <h2>Notes Workspace</h2>
+                        <p id="notesSubtitle">Log in to load and manage your notes.</p>
+                    </div>
+                    <div class="pill" id="userBadge">0 notes</div>
+                </div>
+
+                <div class="note-tools">
+                    <input id="noteInput" type="text" placeholder="Write a quick note after logging in" maxlength="200" disabled>
+                    <button id="addNoteButton" class="secondary" type="button" disabled>Add Note</button>
+                    <button id="deleteNotesButton" class="danger" type="button" disabled>Delete All</button>
+                </div>
+
+                <div id="notesStatus" class="status"></div>
+                <div id="notes" class="notes-list">
+                    <div class="empty-state">Authentication required before notes are shown.</div>
+                </div>
+
+                <button id="logoutButton" class="secondary hidden" type="button">Log Out</button>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let currentUser = null;
+        let authToken = null;
+
+        const signupTab = document.getElementById('signupTab');
+        const loginTab = document.getElementById('loginTab');
+        const signupForm = document.getElementById('signupForm');
+        const loginForm = document.getElementById('loginForm');
+        const signupStatusEl = document.getElementById('authStatus');
+        const loginStatusEl = document.getElementById('loginStatus');
+        const notesShell = document.getElementById('notesShell');
+        const notesEl = document.getElementById('notes');
+        const notesStatusEl = document.getElementById('notesStatus');
+        const notesSubtitleEl = document.getElementById('notesSubtitle');
+        const userBadgeEl = document.getElementById('userBadge');
+        const noteInput = document.getElementById('noteInput');
+        const addNoteButton = document.getElementById('addNoteButton');
+        const deleteNotesButton = document.getElementById('deleteNotesButton');
+        const logoutButton = document.getElementById('logoutButton');
+
+        function setStatusText(element, message, type = '') {
+            element.textContent = message;
+            element.className = `status ${type}`.trim();
+        }
+
+        function clearAuthStatuses() {
+            setStatusText(signupStatusEl, '');
+            setStatusText(loginStatusEl, '');
+        }
+
+        function setAuthStatus(mode, message, type = '') {
+            clearAuthStatuses();
+            const target = mode === 'signup' ? signupStatusEl : loginStatusEl;
+            setStatusText(target, message, type);
+        }
+
+        function setNotesStatus(message, type = '') {
+            notesStatusEl.textContent = message;
+            notesStatusEl.className = `status ${type}`.trim();
+        }
+
+        function switchTab(mode) {
+            const signupActive = mode === 'signup';
+            signupTab.classList.toggle('active', signupActive);
+            loginTab.classList.toggle('active', !signupActive);
+            signupForm.classList.toggle('active', signupActive);
+            loginForm.classList.toggle('active', !signupActive);
+            clearAuthStatuses();
+        }
+
+        function renderNotes(notes) {
+            userBadgeEl.textContent = `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`;
+            notesEl.innerHTML = '';
+
+            if (!notes.length) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.textContent = 'No notes yet. Add the first one from the field above.';
+                notesEl.appendChild(emptyState);
+                return;
+            }
+
+            notes.forEach((note) => {
+                const item = document.createElement('div');
+                item.className = 'note-item';
+                item.textContent = note;
+                notesEl.appendChild(item);
+            });
+        }
+
+        function setAuthenticatedState() {
+            const isAuthenticated = Boolean(currentUser && authToken);
+            notesShell.classList.toggle('locked', !isAuthenticated);
+            noteInput.disabled = !isAuthenticated;
+            addNoteButton.disabled = !isAuthenticated;
+            deleteNotesButton.disabled = !isAuthenticated;
+            logoutButton.classList.toggle('hidden', !isAuthenticated);
+
+            if (!isAuthenticated) {
+                notesSubtitleEl.textContent = 'Log in to load and manage your notes.';
+                userBadgeEl.textContent = '0 notes';
+                notesEl.innerHTML = '<div class="empty-state">Authentication required before notes are shown.</div>';
+                setNotesStatus('');
+                return;
+            }
+
+            notesSubtitleEl.textContent = `Logged in as ${currentUser}. You can now create and delete notes.`;
+        }
+
+        function authHeaders() {
+            return {
+                Authorization: `Bearer ${authToken}`
+            };
+        }
+
+        function handleAuthFailure() {
+            currentUser = null;
+            authToken = null;
+            setAuthenticatedState();
+            setAuthStatus('login', 'Session expired. Please log in again.', 'error');
+        }
+
+        async function getNotes() {
+            if (!currentUser || !authToken) {
+                return;
+            }
+
+            try {
+                const response = await axios.get(`${API_BASE}/notes`, {
+                    headers: authHeaders()
+                });
+                const notes = Array.isArray(response.data?.notes) ? response.data.notes : [];
+                renderNotes(notes);
+            } catch (error) {
+                if (error.response?.status === 401) {
+                    handleAuthFailure();
+                    return;
+                }
+                setNotesStatus('Could not load notes. Check whether the backend is running.', 'error');
+                notesEl.innerHTML = '<div class="empty-state">Unable to load notes right now.</div>';
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+            const username = document.getElementById('signupUsername').value.trim();
+            const password = document.getElementById('signupPassword').value.trim();
+
+            if (!username || !password) {
+                setAuthStatus('signup', 'Username and password are required.', 'error');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/signup`, { username, password });
+                document.getElementById('loginUsername').value = username;
+                document.getElementById('loginPassword').value = password;
+                signupForm.reset();
+                switchTab('login');
+                setAuthStatus('login', response.data?.message || 'Signup successful. Your credentials are ready in the login form.', 'success');
+            } catch (error) {
+                const message = error.response?.data?.message || 'Signup failed. Please try again.';
+                setAuthStatus('signup', message, 'error');
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password) {
+                setAuthStatus('login', 'Username and password are required.', 'error');
+                return;
+            }
+
+            try {
+                const response = await axios.post(`${API_BASE}/login`, { username, password });
+                currentUser = username;
+                authToken = response.data?.token || null;
+
+                if (!authToken) {
+                    setAuthStatus('login', 'Login succeeded but token is missing.', 'error');
+                    currentUser = null;
+                    setAuthenticatedState();
+                    return;
+                }
+
+                setAuthStatus('login', response.data?.message || 'Login successful.', 'success');
+                setAuthenticatedState();
+                setNotesStatus('You are logged in. Notes have been unlocked.', 'success');
+                await getNotes();
+            } catch (error) {
+                const message = error.response?.data?.message || 'Login failed. Please try again.';
+                setAuthStatus('login', message, 'error');
+                currentUser = null;
+                authToken = null;
+                setAuthenticatedState();
+            }
+        }
+
+        async function addNote() {
+            if (!currentUser || !authToken) {
+                setNotesStatus('Please log in before adding notes.', 'error');
+                return;
+            }
+
+            const note = noteInput.value.trim();
+
+            if (!note) {
+                setNotesStatus('Type a note before sending it.', 'error');
+                return;
+            }
+
+            try {
+                await axios.post(`${API_BASE}/notes`, { note }, {
+                    headers: authHeaders()
+                });
+                noteInput.value = '';
+                setNotesStatus('Note added successfully.', 'success');
+                await getNotes();
+            } catch (error) {
+                if (error.response?.status === 401) {
+                    handleAuthFailure();
+                    return;
+                }
+                setNotesStatus('Could not add the note.', 'error');
+            }
+        }
+
+        async function deleteNotes() {
+            if (!currentUser || !authToken) {
+                setNotesStatus('Please log in before deleting notes.', 'error');
+                return;
+            }
+
+            try {
+                await axios.delete(`${API_BASE}/notes`, {
+                    headers: authHeaders()
+                });
+                setNotesStatus('All notes deleted.', 'success');
+                await getNotes();
+            } catch (error) {
+                if (error.response?.status === 401) {
+                    handleAuthFailure();
+                    return;
+                }
+                setNotesStatus('Could not delete notes.', 'error');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            authToken = null;
+            loginForm.reset();
+            noteInput.value = '';
+            setAuthStatus('login', 'Logged out.', 'success');
+            setAuthenticatedState();
+        }
+
+        signupTab.addEventListener('click', () => switchTab('signup'));
+        loginTab.addEventListener('click', () => switchTab('login'));
+        signupForm.addEventListener('submit', handleSignup);
+        loginForm.addEventListener('submit', handleLogin);
+        addNoteButton.addEventListener('click', addNote);
+        deleteNotesButton.addEventListener('click', deleteNotes);
+        logoutButton.addEventListener('click', logout);
+        noteInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                addNote();
+            }
+        });
+
+        setAuthenticatedState();
+    </script>
+</body>
+</html>
