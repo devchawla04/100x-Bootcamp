@@ -1,37 +1,15 @@
 import express from "express";
 import jwt from "jsonwebtoken";
+import { authenticateJWT, JWT_SECRET } from "./middleware.js";
 
 
 const app = express();
 app.use(express.json());
 
-const JWT_SECRET = "your_secret_key";
-
 
 const notes = [];
 
 const users = [];
-
-function authenticateJWT(req, res, next) {
-const authHeader = req.headers.authorization;
-const bearerToken = typeof authHeader === "string" && authHeader.startsWith("Bearer ")
-    ? authHeader.slice(7).trim()
-    : null;
-const fallbackToken = typeof req.headers.token === "string" ? req.headers.token : null;
-const token = bearerToken || fallbackToken;
-
-if (!token) {
-    return res.status(401).json({ message: "Token is required" });
-}
-
-try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-} catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
-}
-}
 
 
 app.post("/signup", function(req, res){
@@ -72,7 +50,7 @@ const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: "1h
 res.json({ message: "Login successful", token: token });
 });
 
-app.post("/notes", authenticateJWT, function(req, res){
+app.post("/notes",authenticateJWT, function(req, res){
 const note = req.body?.note;
 
 if (typeof note !== "string" || note.trim() === "") {
@@ -84,12 +62,12 @@ res.json({message: "Note added successfully"});
 
 });
 
-app.get("/notes", authenticateJWT, function(req, res){
+app.get("/notes",authenticateJWT, function(req, res){
 
 res.json({notes: notes});
 });
 
-app.delete("/notes", authenticateJWT, function(req, res){
+app.delete("/notes",authenticateJWT, function(req, res){
 notes.length = 0;
 res.json({message: "All notes deleted successfully"});
 });
